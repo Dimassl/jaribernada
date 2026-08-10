@@ -7,20 +7,14 @@
 <meta name="description" content="Mainkan piano dengan bentuk jari tangan langsung di browser." />
 <link rel="icon" type="image/png" href="assets/favicon.png" />
 
-
-  
-<!-- Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
-<!-- Styles -->
 <link rel="stylesheet" href="css/style.css" />
 
-<!-- Tone.js (audio engine) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
 
-<!-- MediaPipe Hands (computer vision) -->
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
@@ -29,7 +23,6 @@
 
 <div class="rack" id="rack">
 
-  <!-- ===== Header / Panel Label ===== -->
   <header class="panel-header">
     <div class="brand">
       <img class="brand-mark" src="assets/logo-256.png" alt="Logo GeoGestPlay" />
@@ -44,10 +37,8 @@
     </div>
   </header>
 
-  <!-- ===== Main Stage ===== -->
   <main class="stage">
 
-    <!-- Camera + overlay + finger-step indicator -->
     <section class="scope" aria-label="Tampilan kamera dan deteksi tangan">
       <div class="scope-frame">
         <video id="inputVideo" playsinline autoplay muted></video>
@@ -59,90 +50,6 @@
         </div>
       </div>
 
-      <!-- Signature element: finger-count step rail, satu kolom per tangan -->
       <div class="finger-rail" id="fingerRail" aria-hidden="true">
         <div class="finger-column finger-column--left">
-          <span class="finger-col-label">KIRI &middot; BASS</span>
-          <div class="finger-steps" id="leftFingerSteps"></div>
-        </div>
-        <div class="finger-column finger-column--right">
-          <span class="finger-col-label">KANAN &middot; TREBLE</span>
-          <div class="finger-steps" id="rightFingerSteps"></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Control panel -->
-    <aside class="control-panel" aria-label="Panel kontrol">
-
-      <div class="control-group">
-        <button id="toggleCamera" class="btn-power">
-          <span class="btn-power-icon" aria-hidden="true"></span>
-          <span id="toggleCameraLabel">START KAMERA</span>
-        </button>
-      </div>
-
-      <div class="control-group">
-        <label class="ctl-label" for="scaleSelect">TANGGA NADA</label>
-        <select id="scaleSelect" class="ctl-select">
-          <option value="major">Mayor (Major)</option>
-          <option value="minor">Minor (Natural Minor)</option>
-        </select>
-      </div>
-
-      <div class="control-group">
-        <label class="ctl-label" for="rootSelect">NADA DASAR</label>
-        <select id="rootSelect" class="ctl-select">
-          <option value="0">C</option>
-          <option value="2">D</option>
-          <option value="4">E</option>
-          <option value="5">F</option>
-          <option value="7">G</option>
-          <option value="9">A</option>
-          <option value="11">B</option>
-        </select>
-      </div>
-
-      <div class="control-group">
-        <label class="ctl-label" for="volumeSlider">
-          VOLUME <span class="ctl-value" id="volumeValue">-10 dB</span>
-        </label>
-        <input type="range" id="volumeSlider" class="ctl-slider" min="-40" max="0" value="-10" step="1" />
-      </div>
-
-      <div class="control-group readout-group">
-        <div class="readout">
-          <span class="readout-label">TANGAN KIRI</span>
-          <span class="readout-value" id="leftNoteReadout">—</span>
-        </div>
-        <div class="readout">
-          <span class="readout-label">TANGAN KANAN</span>
-          <span class="readout-value" id="rightNoteReadout">—</span>
-        </div>
-      </div>
-
-      <div class="control-group how-to">
-        <h2>Cara Main</h2>
-        <ul>
-          <li>Angkat tangan di depan kamera seperti sedang <strong>menghitung dengan jari</strong>.</li>
-          <li>Jumlah jari yang ditunjukkan (1–5) memicu satu nada dari tangga nada yang dipilih.</li>
-          <li>Kepalkan tangan (0 jari) untuk diam / berhenti berbunyi.</li>
-          <li><strong>Tangan kiri</strong> = register bass (nada rendah), <strong>tangan kanan</strong> = register treble (nada tinggi). Pakai keduanya sekaligus untuk jangkauan nada yang luas — tidak perlu menggerakkan tangan naik-turun.</li>
-        </ul>
-      </div>
-
-    </aside>
-  </main>
-
-  <footer class="panel-footer">
-    <p>GeoGestPlay &mdash; berjalan sepenuhnya di browser. Tidak ada video yang dikirim ke server.</p>
-  </footer>
-</div>
-
-<!-- App scripts -->
-<script src="js/audioEngine.js"></script>
-<script src="js/gestureDetector.js"></script>
-<script src="js/uiController.js"></script>
-<script src="js/main.js"></script>
-</body>
-</html>
+          <span class="finger-col-
