@@ -8,6 +8,13 @@
  */
 
 (function bootstrap() {
+  // Proteksi Ekstrim: Mencegah script berjalan dua kali di memori browser
+  if (window.GeoGestPlayInitialized) {
+    console.warn("GeoGestPlay sudah diinisialisasi sebelumnya. Menghentikan duplikasi.");
+    return;
+  }
+  window.GeoGestPlayInitialized = true;
+
   let cameraOn = false;
   let audioInitialized = false;
 
@@ -16,15 +23,23 @@
 
   async function ensureAudioReady() {
     if (audioInitialized) return;
+    
+    // Pengecekan aman untuk memastikan Tone.js sudah ter-load sempurna
+    if (typeof Tone === 'undefined') {
+      console.error("Tone.js belum termuat sempurna dari CDN.");
+      alert("Komponen Audio (Tone.js) gagal dimuat. Coba refresh halaman (Ctrl + F5).");
+      return;
+    }
+
     await Tone.start();          // wajib dipicu oleh interaksi pengguna (klik tombol)
     await AudioEngine.init();
 
-    // Mengambil elemen secara aman dengan defensive check
+    // Mengambil elemen secara aman
     const scaleEl = document.getElementById("scaleSelect");
     const rootEl = document.getElementById("rootSelect");
     const volumeEl = document.getElementById("volumeSlider");
 
-    // Hanya mengambil value jika elemen tersebut sudah siap dan ter-render di halaman
+    // Hanya mengambil value jika elemen tersebut sudah siap
     if (scaleEl) AudioEngine.setScale(scaleEl.value);
     if (rootEl) AudioEngine.setRoot(parseInt(rootEl.value, 10));
     if (volumeEl) AudioEngine.setVolumeDb(parseInt(volumeEl.value, 10));
