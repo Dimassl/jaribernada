@@ -13,16 +13,14 @@
 
 <link rel="stylesheet" href="css/style.css" />
 
-<script src="js/audioEngine.js" defer></script>
-<script src="js/gestureDetector.js" defer></script>
-<script src="js/uiController.js" defer></script>
-<script src="js/main.js?v=1.2" defer></script>
-  
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
 </head>
 <body>
 
 <div class="rack" id="rack">
-
   <header class="panel-header">
     <div class="brand">
       <img class="brand-mark" src="assets/logo-256.png" alt="Logo GeoGestPlay" />
@@ -38,7 +36,6 @@
   </header>
 
   <main class="stage">
-
     <section class="scope" aria-label="Tampilan kamera dan deteksi tangan">
       <div class="scope-frame">
         <video id="inputVideo" playsinline autoplay muted></video>
@@ -63,7 +60,6 @@
     </section>
 
     <aside class="control-panel" aria-label="Panel kontrol">
-
       <div class="control-group">
         <button id="toggleCamera" class="btn-power">
           <span class="btn-power-icon" aria-hidden="true"></span>
@@ -116,10 +112,9 @@
           <li>Angkat tangan di depan kamera seperti sedang <strong>menghitung dengan jari</strong>.</li>
           <li>Jumlah jari yang ditunjukkan (1–5) memicu satu nada dari tangga nada yang dipilih.</li>
           <li>Kepalkan tangan (0 jari) untuk diam / berhenti berbunyi.</li>
-          <li><strong>Tangan kiri</strong> = register bass (nada rendah), <strong>tangan kanan</strong> = register treble (nada tinggi). Pakai keduanya sekaligus untuk jangkauan nada yang luas — tidak perlu menggerakkan tangan naik-turun.</li>
+          <li><strong>Tangan kiri</strong> = register bass (nada rendah), <strong>tangan kanan</strong> = register treble (nada tinggi).</li>
         </ul>
       </div>
-
     </aside>
   </main>
 
@@ -128,9 +123,9 @@
   </footer>
 </div>
 
-<script src="js/audioEngine.js" defer></script>
-<script src="js/gestureDetector.js" defer></script>
-<script src="js/uiController.js" defer></script>
-<script src="js/main.js" defer></script>
+<script src="js/audioEngine.js?v=1.3" defer></script>
+<script src="js/gestureDetector.js?v=1.3" defer></script>
+<script src="js/uiController.js?v=1.3" defer></script>
+<script src="js/main.js?v=1.3" defer></script>
 </body>
 </html>
