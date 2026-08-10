@@ -7,6 +7,7 @@
  * ------------------------------------------------------------------
  */
 
+
 (function bootstrap() {
   let cameraOn = false;
   let audioInitialized = false;
