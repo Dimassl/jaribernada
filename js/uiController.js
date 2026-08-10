@@ -56,7 +56,7 @@ const UIController = (() => {
     els.toggleCameraLabel.textContent = isLive ? "STOP KAMERA" : "START KAMERA";
     els.toggleCamera.classList.toggle("is-live", isLive);
     els.statusDot.classList.toggle("live", isLive);
-    els.statusText.textContent = isLive ? "KAMERA LIVE" : "KAMERA OFF";
+    els.statusText.textContent = isLive ? "KAMERA HIDUP" : "KAMERA OFF";
     els.scopeEmpty.classList.toggle("hidden", isLive);
   }
 
