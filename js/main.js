@@ -1,4 +1,11 @@
-
+/**
+ * main.js
+ * ------------------------------------------------------------------
+ * Titik masuk aplikasi: menghubungkan GestureDetector <-> AudioEngine
+ * <-> UIController. Tidak ada logika audio/CV di file ini — murni
+ * orkestrasi & event wiring.
+ * ------------------------------------------------------------------
+ */
 
 (function bootstrap() {
   let cameraOn = false;
@@ -18,8 +25,8 @@
   }
 
   async function startCamera() {
-    await ensureAudioReady();
     try {
+      await ensureAudioReady();
       await GestureDetector.start(videoEl, canvasEl, {
         onHandUpdate: handleHandUpdate,
         onHandLost: handleHandLost,
@@ -27,10 +34,14 @@
       cameraOn = true;
       UIController.setCameraLive(true);
     } catch (err) {
-      console.error("Gagal mengakses webcam:", err);
+      console.error("Gagal memulai GeoGestPlay:", err);
       alert(
-        "Tidak dapat mengakses webcam. Pastikan kamu mengizinkan akses kamera " +
-        "dan situs diakses lewat HTTPS (atau localhost)."
+        "Tidak dapat memulai kamera/audio.\n\n" +
+        "Penyebab umum:\n" +
+        "- Izin webcam ditolak / belum diberikan oleh browser\n" +
+        "- Situs tidak diakses lewat HTTPS (atau localhost)\n" +
+        "- Koneksi ke CDN Tone.js / MediaPipe terblokir\n\n" +
+        "Detail teknis: " + (err && err.message ? err.message : err)
       );
     }
   }
