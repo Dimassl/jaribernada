@@ -19,12 +19,12 @@
     await Tone.start();          // wajib dipicu oleh interaksi pengguna (klik tombol)
     await AudioEngine.init();
 
-    // Mengambil elemen secara aman
+    // Mengambil elemen secara aman dengan defensive check
     const scaleEl = document.getElementById("scaleSelect");
     const rootEl = document.getElementById("rootSelect");
     const volumeEl = document.getElementById("volumeSlider");
 
-    // Hanya set nilai jika elemennya ditemukan di HTML
+    // Hanya mengambil value jika elemen tersebut sudah siap dan ter-render di halaman
     if (scaleEl) AudioEngine.setScale(scaleEl.value);
     if (rootEl) AudioEngine.setRoot(parseInt(rootEl.value, 10));
     if (volumeEl) AudioEngine.setVolumeDb(parseInt(volumeEl.value, 10));
