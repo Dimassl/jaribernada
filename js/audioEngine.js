@@ -1,18 +1,11 @@
 /**
  * audioEngine.js
  * ------------------------------------------------------------------
- * Membungkus Tone.js: satu instrumen piano (Sampler), plus logika
- * pitch quantization berbasis JUMLAH JARI yang terdeteksi per tangan
- * (bukan lagi ketinggian tangan). Tangan kiri selalu berperan sebagai
- * register bass, tangan kanan sebagai register treble — sehingga
- * kedua tangan dipakai sekaligus untuk menjangkau rentang nada yang
- * luas tanpa perlu menggerakkan tangan naik-turun.
  * ------------------------------------------------------------------
  */
 
 const AudioEngine = (() => {
 
-  // Interval semitone relatif terhadap root, untuk tiap tangga nada.
   const SCALES = {
     major: [0, 2, 4, 5, 7, 9, 11],       // Ionian
     minor: [0, 2, 3, 5, 7, 8, 10],       // Natural minor / Aeolian
@@ -20,10 +13,10 @@ const AudioEngine = (() => {
 
   const MIDI_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 
-  // Jumlah jari (1-5) dipetakan langsung ke 5 langkah pertama tangga nada.
+  
   const MAX_FINGERS = 5;
 
-  // Oktaf tetap per tangan: kiri = bass, kanan = treble.
+  
   const HAND_OCTAVE = { Left: 3, Right: 5 };
 
   let state = {
@@ -35,10 +28,7 @@ const AudioEngine = (() => {
     ready: false,
   };
 
-  /**
-   * Piano akustik realistis lewat Tone.Sampler (rekaman Salamander Grand,
-   * dilayani dari CDN publik Tone.js).
-   */
+  
   function buildPiano() {
     return new Tone.Sampler({
       urls: {
@@ -84,11 +74,7 @@ const AudioEngine = (() => {
     if (state.master) state.master.volume.rampTo(db, 0.05);
   }
 
-  /**
-   * Kuantisasi: ubah jumlah jari (1-5) pada tangan tertentu menjadi
-   * frekuensi nada yang selalu berada dalam tangga nada aktif, di
-   * oktaf tetap milik tangan tersebut (kiri = bass, kanan = treble).
-   */
+  
   function quantizeFingersToNote(hand, fingerCount) {
     if (!fingerCount || fingerCount <= 0) return null;
 
@@ -104,7 +90,7 @@ const AudioEngine = (() => {
     return { noteName, freq, midiNote };
   }
 
-  /** Mulai membunyikan nada untuk tangan tertentu ("Left" | "Right"). */
+  
   function noteOn(hand, fingerCount, velocity = 0.85) {
     if (!state.ready) return null;
     const result = quantizeFingersToNote(hand, fingerCount);
@@ -121,7 +107,7 @@ const AudioEngine = (() => {
     return result.noteName;
   }
 
-  /** Perbarui nada saat jumlah jari berubah, tanpa mengganggu tangan lain. */
+  //update 
   function noteUpdate(hand, fingerCount, velocity = 0.85) {
     if (!fingerCount || fingerCount <= 0) {
       noteOff(hand);
