@@ -7,7 +7,6 @@
  * ------------------------------------------------------------------
  */
 
-
 (function bootstrap() {
   let cameraOn = false;
   let audioInitialized = false;
@@ -19,15 +18,23 @@
     if (audioInitialized) return;
     await Tone.start();          // wajib dipicu oleh interaksi pengguna (klik tombol)
     await AudioEngine.init();
-    AudioEngine.setScale(document.getElementById("scaleSelect").value);
-    AudioEngine.setRoot(parseInt(document.getElementById("rootSelect").value, 10));
-    AudioEngine.setVolumeDb(parseInt(document.getElementById("volumeSlider").value, 10));
+
+    // Mengambil elemen secara aman
+    const scaleEl = document.getElementById("scaleSelect");
+    const rootEl = document.getElementById("rootSelect");
+    const volumeEl = document.getElementById("volumeSlider");
+
+    // Hanya set nilai jika elemennya ditemukan di HTML
+    if (scaleEl) AudioEngine.setScale(scaleEl.value);
+    if (rootEl) AudioEngine.setRoot(parseInt(rootEl.value, 10));
+    if (volumeEl) AudioEngine.setVolumeDb(parseInt(volumeEl.value, 10));
+
     audioInitialized = true;
   }
 
   async function startCamera() {
+    await ensureAudioReady();
     try {
-      await ensureAudioReady();
       await GestureDetector.start(videoEl, canvasEl, {
         onHandUpdate: handleHandUpdate,
         onHandLost: handleHandLost,
@@ -35,14 +42,10 @@
       cameraOn = true;
       UIController.setCameraLive(true);
     } catch (err) {
-      console.error("Gagal memulai GeoGestPlay:", err);
+      console.error("Gagal mengakses webcam:", err);
       alert(
-        "Tidak dapat memulai kamera/audio.\n\n" +
-        "Penyebab umum:\n" +
-        "- Izin webcam ditolak / belum diberikan oleh browser\n" +
-        "- Situs tidak diakses lewat HTTPS (atau localhost)\n" +
-        "- Koneksi ke CDN Tone.js / MediaPipe terblokir\n\n" +
-        "Detail teknis: " + (err && err.message ? err.message : err)
+        "Tidak dapat mengakses webcam. Pastikan kamu mengizinkan akses kamera " +
+        "dan situs diakses lewat HTTPS (atau localhost)."
       );
     }
   }
