@@ -1,9 +1,12 @@
 /**
  * audioEngine.js
  * ------------------------------------------------------------------
- * Membungkus Tone.js: membuat instrumen, menerapkan pitch quantization
- * ke tangga nada (scale) yang dipilih, dan mengelola note on/off per
- * tangan (polifoni maksimum 2 suara: kiri & kanan).
+ * Membungkus Tone.js: satu instrumen piano (Sampler), plus logika
+ * pitch quantization berbasis JUMLAH JARI yang terdeteksi per tangan
+ * (bukan lagi ketinggian tangan). Tangan kiri selalu berperan sebagai
+ * register bass, tangan kanan sebagai register treble — sehingga
+ * kedua tangan dipakai sekaligus untuk menjangkau rentang nada yang
+ * luas tanpa perlu menggerakkan tangan naik-turun.
  * ------------------------------------------------------------------
  */
 
@@ -17,14 +20,15 @@ const AudioEngine = (() => {
 
   const MIDI_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 
-  // Rentang oktaf yang dipetakan dari ketinggian tangan (0 = paling rendah).
-  const OCTAVE_SPAN = 2;      // 2 oktaf penuh
-  const BASE_OCTAVE = 3;      // mulai dari oktaf 3 (C3, dst)
+  // Jumlah jari (1-5) dipetakan langsung ke 5 langkah pertama tangga nada.
+  const MAX_FINGERS = 5;
+
+  // Oktaf tetap per tangan: kiri = bass, kanan = treble.
+  const HAND_OCTAVE = { Left: 3, Right: 5 };
 
   let state = {
     root: 0,           // 0 = C
     scaleName: "major",
-    instrumentName: "piano",
     instrument: null,
     master: null,
     activeVoices: { Left: null, Right: null }, // menyimpan nama not aktif per tangan
@@ -32,89 +36,40 @@ const AudioEngine = (() => {
   };
 
   /**
-   * Membuat instrumen Tone.js sesuai pilihan.
-   * Piano memakai sample recording (Salamander) via Tone.Sampler agar realistis.
-   * Instrumen lain memakai synthesis Tone.js yang di-tuning menyerupai karakter aslinya,
-   * sehingga tidak bergantung pada file sample tambahan.
+   * Piano akustik realistis lewat Tone.Sampler (rekaman Salamander Grand,
+   * dilayani dari CDN publik Tone.js).
    */
-  function buildInstrument(name) {
-    switch (name) {
-      case "piano":
-        return new Tone.Sampler({
-          urls: {
-            C4: "C4.mp3",
-            "D#4": "Ds4.mp3",
-            "F#4": "Fs4.mp3",
-            A4: "A4.mp3",
-            C3: "C3.mp3",
-            "D#3": "Ds3.mp3",
-            "F#3": "Fs3.mp3",
-            A3: "A3.mp3",
-            C5: "C5.mp3",
-            "D#5": "Ds5.mp3",
-            "F#5": "Fs5.mp3",
-            A5: "A5.mp3",
-          },
-          release: 1.2,
-          baseUrl: "https://tonejs.github.io/audio/salamander/",
-        });
-
-      case "guitar":
-        // PluckSynth: karplus-strong physical modeling -> karakter dawai dipetik.
-        return new Tone.PolySynth(Tone.Synth, {
-          oscillator: { type: "fatsawtooth", count: 3, spread: 20 },
-          envelope: { attack: 0.005, decay: 0.6, sustain: 0.15, release: 1.4 },
-          volume: -6,
-        });
-
-      case "saxophone":
-        // FMSynth dengan portamento & envelope legato -> karakter tiup yang "menggesek".
-        return new Tone.PolySynth(Tone.FMSynth, {
-          harmonicity: 1.5,
-          modulationIndex: 8,
-          oscillator: { type: "sawtooth" },
-          envelope: { attack: 0.08, decay: 0.25, sustain: 0.65, release: 0.6 },
-          modulation: { type: "square" },
-          modulationEnvelope: { attack: 0.15, decay: 0.2, sustain: 0.4, release: 0.4 },
-          volume: -8,
-        });
-
-      case "kalimba":
-        // AMSynth + envelope cepat & decay panjang -> karakter logam dipetik (bilah kalimba).
-        return new Tone.PolySynth(Tone.AMSynth, {
-          harmonicity: 3.01,
-          oscillator: { type: "sine" },
-          modulation: { type: "triangle" },
-          envelope: { attack: 0.002, decay: 1.4, sustain: 0.05, release: 1.0 },
-          modulationEnvelope: { attack: 0.002, decay: 0.4, sustain: 0.1, release: 0.5 },
-          volume: -5,
-        });
-
-      default:
-        return new Tone.PolySynth(Tone.Synth);
-    }
+  function buildPiano() {
+    return new Tone.Sampler({
+      urls: {
+        C4: "C4.mp3",
+        "D#4": "Ds4.mp3",
+        "F#4": "Fs4.mp3",
+        A4: "A4.mp3",
+        C3: "C3.mp3",
+        "D#3": "Ds3.mp3",
+        "F#3": "Fs3.mp3",
+        A3: "A3.mp3",
+        C2: "C2.mp3",
+        "D#2": "Ds2.mp3",
+        "F#2": "Fs2.mp3",
+        A2: "A2.mp3",
+        C5: "C5.mp3",
+        "D#5": "Ds5.mp3",
+        "F#5": "Fs5.mp3",
+        A5: "A5.mp3",
+        C6: "C6.mp3",
+      },
+      release: 1.2,
+      baseUrl: "https://tonejs.github.io/audio/salamander/",
+    });
   }
 
   async function init() {
     state.master = new Tone.Volume(-10).toDestination();
-    state.instrument = buildInstrument(state.instrumentName);
+    state.instrument = buildPiano();
     state.instrument.connect(state.master);
     state.ready = true;
-  }
-
-  async function setInstrument(name) {
-    if (name === state.instrumentName && state.instrument) return;
-    const old = state.instrument;
-    const fresh = buildInstrument(name);
-    fresh.connect(state.master);
-    state.instrument = fresh;
-    state.instrumentName = name;
-    state.activeVoices.Left = null;
-    state.activeVoices.Right = null;
-    if (old) {
-      // Buang instrumen lama setelah release alami selesai.
-      setTimeout(() => old.dispose && old.dispose(), 1500);
-    }
   }
 
   function setScale(name) {
@@ -130,22 +85,19 @@ const AudioEngine = (() => {
   }
 
   /**
-   * Kuantisasi: ubah posisi vertikal tangan (0 = bawah layar, 1 = atas layar)
-   * menjadi frekuensi nada yang selalu berada dalam tangga nada aktif.
+   * Kuantisasi: ubah jumlah jari (1-5) pada tangan tertentu menjadi
+   * frekuensi nada yang selalu berada dalam tangga nada aktif, di
+   * oktaf tetap milik tangan tersebut (kiri = bass, kanan = treble).
    */
-  function quantizeYToNote(normalizedHeight) {
+  function quantizeFingersToNote(hand, fingerCount) {
+    if (!fingerCount || fingerCount <= 0) return null;
+
     const scale = SCALES[state.scaleName];
-    const totalSteps = scale.length * OCTAVE_SPAN;
-    const clamped = Math.min(0.999, Math.max(0, normalizedHeight));
-    const stepIndex = Math.floor(clamped * totalSteps);
-
-    const octaveOffset = Math.floor(stepIndex / scale.length);
-    const degreeIndex = stepIndex % scale.length;
+    const degreeIndex = Math.min(fingerCount, MAX_FINGERS, scale.length) - 1; // 1-5 -> 0-4
     const semitoneFromRoot = scale[degreeIndex];
+    const octave = HAND_OCTAVE[hand] ?? 4;
 
-    const midiNote =
-      12 * (BASE_OCTAVE + octaveOffset) + state.root + semitoneFromRoot + 12; // +12: C4 anchor
-
+    const midiNote = 12 * octave + state.root + semitoneFromRoot + 12; // +12: C4 anchor
     const noteName = MIDI_NAMES[midiNote % 12] + Math.floor(midiNote / 12 - 1);
     const freq = Tone.Midi(midiNote).toFrequency();
 
@@ -153,32 +105,39 @@ const AudioEngine = (() => {
   }
 
   /** Mulai membunyikan nada untuk tangan tertentu ("Left" | "Right"). */
-  function noteOn(hand, normalizedHeight, velocity = 0.85) {
+  function noteOn(hand, fingerCount, velocity = 0.85) {
     if (!state.ready) return null;
-    const { noteName, freq } = quantizeYToNote(normalizedHeight);
+    const result = quantizeFingersToNote(hand, fingerCount);
+    if (!result) return null;
 
-    // Jika tangan ini sudah membunyikan nada lain, lepaskan dulu (glide antar nada).
-    if (state.activeVoices[hand] && state.activeVoices[hand] !== noteName) {
+    if (state.activeVoices[hand] && state.activeVoices[hand] !== result.noteName) {
       safeRelease(state.activeVoices[hand]);
     }
 
     if (state.instrument.triggerAttack) {
-      state.instrument.triggerAttack(freq, Tone.now(), velocity);
+      state.instrument.triggerAttack(result.freq, Tone.now(), velocity);
     }
-    state.activeVoices[hand] = noteName;
-    return noteName;
+    state.activeVoices[hand] = result.noteName;
+    return result.noteName;
   }
 
-  /** Perbarui pitch nada yang sedang berbunyi (glide halus) tanpa re-trigger attack. */
-  function noteUpdate(hand, normalizedHeight, velocity = 0.85) {
-    if (!state.ready || !state.activeVoices[hand]) return noteOn(hand, normalizedHeight, velocity);
-    const { noteName } = quantizeYToNote(normalizedHeight);
-    if (noteName !== state.activeVoices[hand]) {
-      // Nada berubah antar-langkah tangga nada -> lepas lalu bunyikan nada baru.
-      safeRelease(state.activeVoices[hand]);
-      return noteOn(hand, normalizedHeight, velocity);
+  /** Perbarui nada saat jumlah jari berubah, tanpa mengganggu tangan lain. */
+  function noteUpdate(hand, fingerCount, velocity = 0.85) {
+    if (!fingerCount || fingerCount <= 0) {
+      noteOff(hand);
+      return null;
     }
-    return noteName;
+    const result = quantizeFingersToNote(hand, fingerCount);
+    if (!result) return null;
+
+    if (!state.activeVoices[hand]) {
+      return noteOn(hand, fingerCount, velocity);
+    }
+    if (result.noteName !== state.activeVoices[hand]) {
+      safeRelease(state.activeVoices[hand]);
+      return noteOn(hand, fingerCount, velocity);
+    }
+    return result.noteName;
   }
 
   function safeRelease(noteName) {
@@ -197,25 +156,20 @@ const AudioEngine = (() => {
     }
   }
 
-  function getScaleDegreesCount() {
-    return SCALES[state.scaleName].length * OCTAVE_SPAN;
-  }
-
   function getActiveNote(hand) {
     return state.activeVoices[hand];
   }
 
   return {
     init,
-    setInstrument,
     setScale,
     setRoot,
     setVolumeDb,
-    quantizeYToNote,
+    quantizeFingersToNote,
     noteOn,
     noteUpdate,
     noteOff,
-    getScaleDegreesCount,
     getActiveNote,
+    MAX_FINGERS,
   };
 })();
