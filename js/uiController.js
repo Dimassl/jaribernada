@@ -1,11 +1,6 @@
 /**
  * uiController.js
  * ------------------------------------------------------------------
- * Mengurus semua interaksi DOM: dropdown tangga nada/nada dasar,
- * slider volume, tombol start/stop kamera, status readout, dan
- * visualisasi "finger-step" (indikator jumlah jari 0-5 per tangan —
- * elemen signature UI, menggantikan pitch ladder berbasis ketinggian
- * pada versi sebelumnya).
  * ------------------------------------------------------------------
  */
 
@@ -48,7 +43,7 @@ const UIController = (() => {
     const container = hand === "Left" ? els.leftFingerSteps : els.rightFingerSteps;
     if (!container) return;
     const steps = container.querySelectorAll(".finger-step");
-    // Nyalakan step 1..count (step 0 = diam / kepalan tangan, tidak pernah menyala).
+    
     steps.forEach((s, i) => s.classList.toggle("on", i > 0 && i <= count));
   }
 
