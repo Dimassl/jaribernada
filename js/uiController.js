@@ -1,20 +1,13 @@
-/**
- * uiController.js
- * ------------------------------------------------------------------
- * Mengurus semua interaksi DOM: dropdown instrumen/tangga nada/nada
- * dasar, slider volume, tombol start/stop kamera, status readout,
- * dan visualisasi "pitch ladder" (elemen signature UI).
- * ------------------------------------------------------------------
- */
 
 const UIController = (() => {
+  const STEP_COUNT = 6; // 0 (diam) sampai 5 jari
+
   let els = {};
 
   function cacheEls() {
     els = {
       toggleCamera: document.getElementById("toggleCamera"),
       toggleCameraLabel: document.getElementById("toggleCameraLabel"),
-      instrumentSelect: document.getElementById("instrumentSelect"),
       scaleSelect: document.getElementById("scaleSelect"),
       rootSelect: document.getElementById("rootSelect"),
       volumeSlider: document.getElementById("volumeSlider"),
@@ -22,37 +15,31 @@ const UIController = (() => {
       statusDot: document.getElementById("statusDot"),
       statusText: document.getElementById("statusText"),
       scopeEmpty: document.getElementById("scopeEmpty"),
-      ladderTrack: document.getElementById("ladderTrack"),
-      cursorLeft: document.getElementById("cursorLeft"),
-      cursorRight: document.getElementById("cursorRight"),
+      leftFingerSteps: document.getElementById("leftFingerSteps"),
+      rightFingerSteps: document.getElementById("rightFingerSteps"),
       leftNoteReadout: document.getElementById("leftNoteReadout"),
       rightNoteReadout: document.getElementById("rightNoteReadout"),
     };
   }
 
-  function buildLadder(stepCount) {
-    els.ladderTrack.innerHTML = "";
-    for (let i = 0; i < stepCount; i++) {
-      const rung = document.createElement("div");
-      rung.className = "ladder-rung";
-      rung.dataset.index = i;
-      els.ladderTrack.appendChild(rung);
+  function buildFingerSteps() {
+    for (const container of [els.leftFingerSteps, els.rightFingerSteps]) {
+      container.innerHTML = "";
+      for (let i = 0; i < STEP_COUNT; i++) {
+        const step = document.createElement("div");
+        step.className = "finger-step";
+        step.dataset.index = i;
+        container.appendChild(step);
+      }
     }
   }
 
-  function highlightRung(stepIndex) {
-    const rungs = els.ladderTrack.querySelectorAll(".ladder-rung");
-    rungs.forEach((r) => r.classList.remove("on"));
-    if (stepIndex >= 0 && stepIndex < rungs.length) {
-      rungs[stepIndex].classList.add("on");
-    }
-  }
-
-  function setCursor(hand, normalizedHeight, active) {
-    const el = hand === "Left" ? els.cursorLeft : els.cursorRight;
-    if (!el) return;
-    el.style.top = `${(1 - normalizedHeight) * 100}%`;
-    el.classList.toggle("active", !!active);
+  function setFingerCount(hand, count) {
+    const container = hand === "Left" ? els.leftFingerSteps : els.rightFingerSteps;
+    if (!container) return;
+    const steps = container.querySelectorAll(".finger-step");
+    // Nyalakan step 1..count (step 0 = diam / kepalan tangan, tidak pernah menyala).
+    steps.forEach((s, i) => s.classList.toggle("on", i > 0 && i <= count));
   }
 
   function setReadout(hand, text) {
@@ -70,12 +57,9 @@ const UIController = (() => {
 
   function bind(handlers) {
     cacheEls();
+    buildFingerSteps();
 
     els.toggleCamera.addEventListener("click", handlers.onToggleCamera);
-
-    els.instrumentSelect.addEventListener("change", (e) => {
-      handlers.onInstrumentChange(e.target.value);
-    });
 
     els.scaleSelect.addEventListener("change", (e) => {
       handlers.onScaleChange(e.target.value);
@@ -94,9 +78,7 @@ const UIController = (() => {
 
   return {
     bind,
-    buildLadder,
-    highlightRung,
-    setCursor,
+    setFingerCount,
     setReadout,
     setCameraLive,
     getEls: () => els,
