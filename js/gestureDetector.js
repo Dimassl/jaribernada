@@ -1,18 +1,11 @@
 /**
  * gestureDetector.js
  * ------------------------------------------------------------------
- * Melacak tangan lewat webcam menggunakan MediaPipe Hands, menggambar
- * overlay landmark, dan menghitung JUMLAH JARI yang terentang (0-5)
- * pada tiap tangan — seperti gestur menghitung dengan jari.
- *
- * Callback yang diekspos ke luar:
- *   - onHandUpdate(handLabel, fingerCount, landmarks) -> tiap frame tangan terdeteksi
- *   - onHandLost(handLabel)                            -> tangan hilang dari frame
  * ------------------------------------------------------------------
  */
 
 const GestureDetector = (() => {
-  // Landmark index MediaPipe Hands
+  
   const THUMB_TIP = 4, THUMB_IP = 3, PINKY_MCP = 17, WRIST = 0;
   const FINGERS = [
     { name: "index", tip: 8, pip: 6 },
@@ -21,8 +14,6 @@ const GestureDetector = (() => {
     { name: "pinky", tip: 20, pip: 18 },
   ];
 
-  // Debounce: jumlah jari harus stabil selama N frame berturut-turut
-  // sebelum dianggap "berubah", supaya nada tidak berkedip-kedip akibat noise.
   const STABLE_FRAMES = 3;
 
   let videoEl, canvasEl, ctx;
@@ -48,19 +39,15 @@ const GestureDetector = (() => {
     canvasEl.width = videoEl.videoWidth || canvasEl.clientWidth;
     canvasEl.height = videoEl.videoHeight || canvasEl.clientHeight;
   }
-
-  /** Hitung jari yang terentang; mengembalikan {count, extended: {thumb,index,...}} */
+  
   function countExtendedFingers(landmarks) {
     const extended = {};
 
-    // Jari selain jempol: terentang jika ujung jari lebih "tinggi" (y lebih kecil)
-    // dibanding sendi tengahnya — berlaku saat tangan diangkat menghadap kamera.
+    
     for (const f of FINGERS) {
       extended[f.name] = landmarks[f.tip].y < landmarks[f.pip].y;
     }
 
-    // Jempol bergerak menyamping, bukan naik-turun -> dicek lewat jarak ke
-    // pangkal kelingking (rotation-invariant terhadap orientasi tangan).
     extended.thumb = dist(landmarks[THUMB_TIP], landmarks[PINKY_MCP]) >
                       dist(landmarks[THUMB_IP], landmarks[PINKY_MCP]);
 
@@ -85,7 +72,7 @@ const GestureDetector = (() => {
       ctx.fill();
     }
 
-    // Tandai ujung jari yang terentang lebih besar & bercahaya.
+    //mark
     for (const [name, idx] of Object.entries(tipIndices)) {
       const lm = landmarks[idx];
       const x = lm.x * canvasEl.width;
@@ -108,7 +95,7 @@ const GestureDetector = (() => {
     const color = handedness === "Left" ? "#9b4fd1" : "#29c4b6";
 
     ctx.save();
-    ctx.scale(-1, 1); // teks tidak ikut ter-mirror oleh transform CSS pada canvas
+    ctx.scale(-1, 1); 
     ctx.font = "600 15px 'JetBrains Mono', monospace";
     ctx.textAlign = "center";
     ctx.fillStyle = color;
@@ -128,10 +115,8 @@ const GestureDetector = (() => {
     if (results.multiHandLandmarks && results.multiHandedness) {
       for (let i = 0; i < results.multiHandLandmarks.length; i++) {
         const landmarks = results.multiHandLandmarks[i];
-        // MediaPipe melabeli tangan dari sudut pandang kamera; video & canvas
-        // di-mirror lewat CSS (scaleX(-1)) untuk interaksi yang natural, jadi
-        // label perlu dibalik agar sesuai persepsi pengguna di layar.
-        const rawLabel = results.multiHandedness[i].label; // "Left" | "Right"
+        
+        const rawLabel = results.multiHandedness[i].label; 
         const label = rawLabel === "Left" ? "Right" : "Left";
 
         seenThisFrame[label] = true;
@@ -143,8 +128,8 @@ const GestureDetector = (() => {
         drawConnectorsAndPoints(landmarks, label, extended);
         drawFingerCountBadge(landmarks, label, count);
 
-        // Debounce sederhana: hanya "commit" perubahan jumlah jari setelah
-        // stabil beberapa frame berturut-turut.
+        // Debounce sederhana
+      
         if (count === st.pendingCount) {
           st.pendingStreak++;
         } else {
@@ -159,7 +144,6 @@ const GestureDetector = (() => {
       }
     }
 
-    // Tangan yang hilang dari frame -> reset & beri tahu agar nada dimatikan.
     for (const label of ["Left", "Right"]) {
       const st = handStates[label];
       if (st.present && !seenThisFrame[label]) {
