@@ -3,8 +3,9 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Gesture Synth — Mainkan Musik dengan Tanganmu</title>
-<meta name="description" content="Synthesizer interaktif berbasis gestur tangan langsung di browser." />
+<title>GeoGestPlay — Piano dengan Hitungan Jari</title>
+<meta name="description" content="Mainkan piano dengan bentuk jari tangan langsung di browser." />
+<link rel="icon" type="image/png" href="assets/favicon.png" />
 
 <!-- Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -29,10 +30,10 @@
   <!-- ===== Header / Panel Label ===== -->
   <header class="panel-header">
     <div class="brand">
-      <span class="brand-mark" aria-hidden="true"></span>
+      <img class="brand-mark" src="assets/logo-256.png" alt="Logo GeoGestPlay" />
       <div class="brand-text">
-        <h1>GESTURE&nbsp;SYNTH</h1>
-        <p class="subtitle">mainan bala bala &middot; kontrol lewat gerak tangan</p>
+        <h1>GeoGestPlay</h1>
+        <p class="subtitle">piano &middot; dimainkan dengan hitungan jari</p>
       </div>
     </div>
     <div class="status-readout" id="statusReadout">
@@ -44,7 +45,7 @@
   <!-- ===== Main Stage ===== -->
   <main class="stage">
 
-    <!-- Camera + overlay + pitch ladder -->
+    <!-- Camera + overlay + finger-step indicator -->
     <section class="scope" aria-label="Tampilan kamera dan deteksi tangan">
       <div class="scope-frame">
         <video id="inputVideo" playsinline autoplay muted></video>
@@ -56,11 +57,16 @@
         </div>
       </div>
 
-      <!-- Signature element: pitch ladder rail -->
-      <div class="pitch-ladder" id="pitchLadder" aria-hidden="true">
-        <div class="ladder-track" id="ladderTrack"></div>
-        <div class="ladder-cursor ladder-cursor--l" id="cursorLeft"></div>
-        <div class="ladder-cursor ladder-cursor--r" id="cursorRight"></div>
+      <!-- Signature element: finger-count step rail, satu kolom per tangan -->
+      <div class="finger-rail" id="fingerRail" aria-hidden="true">
+        <div class="finger-column finger-column--left">
+          <span class="finger-col-label">KIRI &middot; BASS</span>
+          <div class="finger-steps" id="leftFingerSteps"></div>
+        </div>
+        <div class="finger-column finger-column--right">
+          <span class="finger-col-label">KANAN &middot; TREBLE</span>
+          <div class="finger-steps" id="rightFingerSteps"></div>
+        </div>
       </div>
     </section>
 
@@ -72,16 +78,6 @@
           <span class="btn-power-icon" aria-hidden="true"></span>
           <span id="toggleCameraLabel">START KAMERA</span>
         </button>
-      </div>
-
-      <div class="control-group">
-        <label class="ctl-label" for="instrumentSelect">INSTRUMEN</label>
-        <select id="instrumentSelect" class="ctl-select">
-          <option value="piano">Piano</option>
-          <option value="guitar">Gitar</option>
-          <option value="saxophone">Saxophone</option>
-          <option value="kalimba">Kalimba</option>
-        </select>
       </div>
 
       <div class="control-group">
@@ -126,10 +122,10 @@
       <div class="control-group how-to">
         <h2>Cara Main</h2>
         <ul>
-          <li><strong>Ketinggian tangan</strong> mengatur nada (tinggi = nada tinggi).</li>
-          <li><strong>Cubit ibu jari + telunjuk</strong> untuk memetik / membunyikan nada.</li>
-          <li><strong>Lepas cubitan</strong> untuk menghentikan nada.</li>
-          <li>Gunakan kedua tangan untuk memainkan dua nada sekaligus.</li>
+          <li>Angkat tangan di depan kamera seperti sedang <strong>menghitung dengan jari</strong>.</li>
+          <li>Jumlah jari yang ditunjukkan (1–5) memicu satu nada dari tangga nada yang dipilih.</li>
+          <li>Kepalkan tangan (0 jari) untuk diam / berhenti berbunyi.</li>
+          <li><strong>Tangan kiri</strong> = register bass (nada rendah), <strong>tangan kanan</strong> = register treble (nada tinggi). Pakai keduanya sekaligus untuk jangkauan nada yang luas — tidak perlu menggerakkan tangan naik-turun.</li>
         </ul>
       </div>
 
@@ -137,7 +133,7 @@
   </main>
 
   <footer class="panel-footer">
-    <p>Gesture Synth &mdash; berjalan sepenuhnya di browser. Tidak ada video yang dikirim ke server.</p>
+    <p>GeoGestPlay &mdash; berjalan sepenuhnya di browser. Tidak ada video yang dikirim ke server.</p>
   </footer>
 </div>
 
