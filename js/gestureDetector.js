@@ -1,3 +1,15 @@
+/**
+ * gestureDetector.js
+ * ------------------------------------------------------------------
+ * Melacak tangan lewat webcam menggunakan MediaPipe Hands, menggambar
+ * overlay landmark, dan menghitung JUMLAH JARI yang terentang (0-5)
+ * pada tiap tangan — seperti gestur menghitung dengan jari.
+ *
+ * Callback yang diekspos ke luar:
+ *   - onHandUpdate(handLabel, fingerCount, landmarks) -> tiap frame tangan terdeteksi
+ *   - onHandLost(handLabel)                            -> tangan hilang dari frame
+ * ------------------------------------------------------------------
+ */
 
 const GestureDetector = (() => {
   // Landmark index MediaPipe Hands
