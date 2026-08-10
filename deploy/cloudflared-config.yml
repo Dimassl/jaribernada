@@ -1,10 +1,4 @@
-# ============================================================================
-# Contoh konfigurasi Cloudflare Tunnel — GEOGESTPLAY
-# Lokasi file di VPS: /etc/cloudflared/config.yml
-# Catatan: kalau kamu pakai dashboard-managed tunnel (Add route lewat
-# dashboard Cloudflare, seperti tunnel "swarm"), file ini tidak dipakai —
-# cukup tambahkan route lewat dashboard. File ini hanya untuk skenario
-# tunnel berbasis config lokal (cloudflared tunnel create + config.yml).
+ 
 # ============================================================================
 
 
@@ -13,9 +7,9 @@ tunnel: gestur-synth-tunnel
 credentials-file: /etc/cloudflared/<TUNNEL-UUID>.json
 
 ingress:
-  # Traffic untuk gestur.geodfine.my.id diteruskan ke Nginx lokal (port 8095)
+  # Traffic
   - hostname: gestur.geodfine.my.id
     service: http://localhost:8095
 
-  # Aturan terakhir wajib ada — menolak/menutup request yang tidak cocok host manapun.
+
   - service: http_status:404
