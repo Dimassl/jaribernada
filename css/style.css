@@ -3,6 +3,7 @@
    Palette sampled directly from the brand logo's gradient:
    chartreuse -> gold -> magenta -> purple -> teal.
    ========================================================================== */
+
 :root {
   --bg: #14111a;
   --panel: #1c1826;
