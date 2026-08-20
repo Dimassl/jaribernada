@@ -1,14 +1,15 @@
-
-
 const AudioEngine = (() => {
 
- 
+
   const SCALES = {
-    major: [0, 2, 4, 5, 7, 9, 11],      
+    major: [0, 2, 4, 5, 7, 9, 11],     
     minor: [0, 2, 3, 5, 7, 8, 10],     
   };
 
   const MIDI_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+.
+  const COMBO_VALUES = [1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
+
 
   const HAND_OCTAVE = { Left: 2, Right: 4 };
 
@@ -20,6 +21,7 @@ const AudioEngine = (() => {
     activeVoices: { Left: null, Right: null },
     ready: false,
   };
+
 
   function buildPiano() {
     return new Tone.Sampler({
@@ -68,24 +70,24 @@ const AudioEngine = (() => {
 
  
   function computeNoteInfo(hand, value, thumbBonus = false) {
-    if (!value || value <= 0) return null;
+    const sequenceIndex = COMBO_VALUES.indexOf(value);
+    if (sequenceIndex === -1) return null; 
 
     const scale = SCALES[state.scaleName];
-    const clamped = Math.min(value, 15);
-    const octaveOffset = Math.floor((clamped - 1) / scale.length);
-    const degreeIndex = (clamped - 1) % scale.length;
+    const octaveOffset = Math.floor(sequenceIndex / scale.length);
+    const degreeIndex = sequenceIndex % scale.length;
     const semitoneFromRoot = scale[degreeIndex];
 
     const bonusOctave = thumbBonus ? 1 : 0;
     const octave = (HAND_OCTAVE[hand] ?? 3) + octaveOffset + bonusOctave;
 
-    const midiNote = 12 * octave + state.root + semitoneFromRoot + 12; 
+    const midiNote = 12 * octave + state.root + semitoneFromRoot + 12; // +12: C4 anchor
     const noteName = MIDI_NAMES[midiNote % 12] + Math.floor(midiNote / 12 - 1);
 
     return { noteName, midiNote };
   }
 
-  
+
   function previewNoteName(hand, value, thumbBonus = false) {
     const info = computeNoteInfo(hand, value, thumbBonus);
     return info ? info.noteName : null;
@@ -95,7 +97,7 @@ const AudioEngine = (() => {
     return Tone.Midi(midiNote).toFrequency();
   }
 
-
+ 
   function noteOn(hand, value, thumbBonus = false, velocity = 0.85) {
     if (!state.ready) return null;
     const info = computeNoteInfo(hand, value, thumbBonus);
@@ -112,7 +114,7 @@ const AudioEngine = (() => {
     return info.noteName;
   }
 
-  /* */
+
   function noteUpdate(hand, value, thumbBonus = false, velocity = 0.85) {
     if (!value || value <= 0) {
       noteOff(hand);
@@ -163,5 +165,6 @@ const AudioEngine = (() => {
     noteOff,
     getActiveNote,
     HAND_OCTAVE,
+    COMBO_VALUES,
   };
 })();
