@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>GeoGestPlay-main dengan gestur</title>
+<title>GeoGestPlay — Piano dengan Kombinasi Jari</title>
 <meta name="description" content="Mainkan piano dengan kombinasi bentuk jari tangan langsung di browser." />
 <link rel="icon" type="image/png" href="assets/favicon.png" />
 
@@ -12,13 +12,13 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
-<!-- Google Material Symbol -->
+<!-- Google Material -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
 
 <!-- Styles -->
 <link rel="stylesheet" href="css/style.css" />
 
-<!--(audio engine) -->
+<!-- Tone.js -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
 
 <!-- MediaPipe Hands-->
@@ -60,14 +60,14 @@
         </div>
       </div>
 
-      <!-- Signature element -->
+      <!-- Signature element: gesture card per tangan (status 5 jari + nada aktif) -->
       <div class="gesture-rail" aria-hidden="true">
         <div class="gesture-card gesture-card--left">
           <div class="gesture-card__head">
             <span class="material-symbols-outlined" aria-hidden="true">back_hand</span>
             <div class="gesture-card__title">
               <span class="gesture-card__hand">KIRI</span>
-              <span class="gesture-card__register">Bass</span>
+              <span class="gesture-card__register">Rendah</span>
             </div>
           </div>
           <div class="finger-chip" id="leftFingerChip"></div>
@@ -135,10 +135,10 @@
         <h2><span class="material-symbols-outlined how-to__icon" aria-hidden="true">info</span> Cara Main</h2>
         <ul>
           <li>Setiap jari punya bobot: <strong>Telunjuk = 8, Tengah = 4, Manis = 2, Kelingking = 1</strong>.</li>
-          <li>Jumlahkan bobot jari yang diacungkan untuk memilih nada, total 1–7 memainkan satu oktaf penuh, 8–14 memainkan oktaf berikutnya.</li>
+          <li>Jumlahkan bobot jari yang diacungkan untuk memilih nada, 14 kombinasi memainkan 2 oktaf penuh secara berurutan.</li>
           <li>Kepalkan keempat jari itu (nilai 0) untuk diam / berhenti berbunyi.</li>
           <li>Ikut acungkan <strong>ibu jari</strong> untuk naik satu oktaf tambahan (bonus).</li>
-          <li><strong>Tangan kiri</strong> = register bass, <strong>tangan kanan</strong> = register treble, pakai keduanya sekaligus untuk jangkauan nada yang luas.</li>
+          <li><strong>Tangan kiri</strong> = rendah, <strong>tangan kanan</strong> = tinggi pakai keduanya sekaligus untuk jangkauan nada yang luas.</li>
         </ul>
       </div>
 
@@ -149,11 +149,11 @@
         </summary>
         <div class="combo-tables">
           <div>
-            <p class="combo-tables__label">Tangan Kiri (rendah)</p>
+            <p class="combo-tables__label">Tangan Kiri (Bass)</p>
             <div class="combo-table" id="comboTableLeft"></div>
           </div>
           <div>
-            <p class="combo-tables__label">Tangan Kanan (tinggi)</p>
+            <p class="combo-tables__label">Tangan Kanan (Treble)</p>
             <div class="combo-table" id="comboTableRight"></div>
           </div>
         </div>
@@ -163,7 +163,7 @@
   </main>
 
   <footer class="panel-footer">
-    <p>GeoGestPlay-berjalan sepenuhnya di browser. Tidak ada video yang dikirim ke server.</p>
+    <p>GeoGestPlay berjalan sepenuhnya di browser. Tidak ada video yang dikirim ke server.</p>
   </footer>
 </div>
 
