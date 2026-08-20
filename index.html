@@ -3,25 +3,25 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>GeoGestPlay — Piano dengan Kombinasi Jari</title>
+<title>GeoGestPlay-main dengan gestur</title>
 <meta name="description" content="Mainkan piano dengan kombinasi bentuk jari tangan langsung di browser." />
 <link rel="icon" type="image/png" href="assets/favicon.png" />
 
-<!-- Fonts: pasangan tipografi profesional (Inter + JetBrains Mono untuk data numerik) -->
+<!-- Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
-<!-- Google Material Symbols (ikon), bukan emoji -->
+<!-- Google Material Symbol -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
 
 <!-- Styles -->
 <link rel="stylesheet" href="css/style.css" />
 
-<!-- Tone.js (audio engine) -->
+<!--(audio engine) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
 
-<!-- MediaPipe Hands (computer vision) -->
+<!-- MediaPipe Hands-->
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
@@ -60,7 +60,7 @@
         </div>
       </div>
 
-      <!-- Signature element: gesture card per tangan (status 5 jari + nada aktif) -->
+      <!-- Signature element -->
       <div class="gesture-rail" aria-hidden="true">
         <div class="gesture-card gesture-card--left">
           <div class="gesture-card__head">
@@ -79,7 +79,7 @@
             <span class="material-symbols-outlined gesture-card__hand-icon--mirror" aria-hidden="true">back_hand</span>
             <div class="gesture-card__title">
               <span class="gesture-card__hand">KANAN</span>
-              <span class="gesture-card__register">Treble</span>
+              <span class="gesture-card__register">Tinggi</span>
             </div>
           </div>
           <div class="finger-chip" id="rightFingerChip"></div>
@@ -149,11 +149,11 @@
         </summary>
         <div class="combo-tables">
           <div>
-            <p class="combo-tables__label">Tangan Kiri (Bass)</p>
+            <p class="combo-tables__label">Tangan Kiri (rendah)</p>
             <div class="combo-table" id="comboTableLeft"></div>
           </div>
           <div>
-            <p class="combo-tables__label">Tangan Kanan (Treble)</p>
+            <p class="combo-tables__label">Tangan Kanan (tinggi)</p>
             <div class="combo-table" id="comboTableRight"></div>
           </div>
         </div>
