@@ -1,5 +1,3 @@
-
-
 const UIController = (() => {
   const FINGER_ORDER = ["thumb", "index", "middle", "ring", "pinky"];
   const FINGER_LABEL = { thumb: "Ibu Jari", index: "Telunjuk", middle: "Tengah", ring: "Manis", pinky: "Kelingking" };
@@ -66,8 +64,6 @@ const UIController = (() => {
     els.scopeEmpty.classList.toggle("hidden", isLive);
   }
 
-  ///==============///
-
   function renderComboTable(hand) {
     const table = hand === "Left" ? els.comboTableLeft : els.comboTableRight;
     if (!table) return;
@@ -85,8 +81,7 @@ const UIController = (() => {
     `;
     table.appendChild(head);
 
-    for (let value = 1; value <= 15; value++) {
-      if (value === 15) continue; 
+    for (const value of AudioEngine.COMBO_VALUES) {
       const row = document.createElement("div");
       row.className = "combo-row";
       const bits = {
