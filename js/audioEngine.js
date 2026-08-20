@@ -1,34 +1,26 @@
-/**
- * audioEngine.js
- * ------------------------------------------------------------------
- * ------------------------------------------------------------------
- */
+
 
 const AudioEngine = (() => {
 
+ 
   const SCALES = {
-    major: [0, 2, 4, 5, 7, 9, 11],       // Ionian
-    minor: [0, 2, 3, 5, 7, 8, 10],       // Natural minor / Aeolian
+    major: [0, 2, 4, 5, 7, 9, 11],      
+    minor: [0, 2, 3, 5, 7, 8, 10],     
   };
 
   const MIDI_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 
-  
-  const MAX_FINGERS = 5;
-
-  
-  const HAND_OCTAVE = { Left: 3, Right: 5 };
+  const HAND_OCTAVE = { Left: 2, Right: 4 };
 
   let state = {
     root: 0,           // 0 = C
     scaleName: "major",
     instrument: null,
     master: null,
-    activeVoices: { Left: null, Right: null }, // menyimpan nama not aktif per tangan
+    activeVoices: { Left: null, Right: null },
     ready: false,
   };
 
-  
   function buildPiano() {
     return new Tone.Sampler({
       urls: {
@@ -74,56 +66,69 @@ const AudioEngine = (() => {
     if (state.master) state.master.volume.rampTo(db, 0.05);
   }
 
-  
-  function quantizeFingersToNote(hand, fingerCount) {
-    if (!fingerCount || fingerCount <= 0) return null;
+ 
+  function computeNoteInfo(hand, value, thumbBonus = false) {
+    if (!value || value <= 0) return null;
 
     const scale = SCALES[state.scaleName];
-    const degreeIndex = Math.min(fingerCount, MAX_FINGERS, scale.length) - 1; // 1-5 -> 0-4
+    const clamped = Math.min(value, 15);
+    const octaveOffset = Math.floor((clamped - 1) / scale.length);
+    const degreeIndex = (clamped - 1) % scale.length;
     const semitoneFromRoot = scale[degreeIndex];
-    const octave = HAND_OCTAVE[hand] ?? 4;
 
-    const midiNote = 12 * octave + state.root + semitoneFromRoot + 12; // +12: C4 anchor
+    const bonusOctave = thumbBonus ? 1 : 0;
+    const octave = (HAND_OCTAVE[hand] ?? 3) + octaveOffset + bonusOctave;
+
+    const midiNote = 12 * octave + state.root + semitoneFromRoot + 12; 
     const noteName = MIDI_NAMES[midiNote % 12] + Math.floor(midiNote / 12 - 1);
-    const freq = Tone.Midi(midiNote).toFrequency();
 
-    return { noteName, freq, midiNote };
+    return { noteName, midiNote };
   }
 
   
-  function noteOn(hand, fingerCount, velocity = 0.85) {
-    if (!state.ready) return null;
-    const result = quantizeFingersToNote(hand, fingerCount);
-    if (!result) return null;
+  function previewNoteName(hand, value, thumbBonus = false) {
+    const info = computeNoteInfo(hand, value, thumbBonus);
+    return info ? info.noteName : null;
+  }
 
-    if (state.activeVoices[hand] && state.activeVoices[hand] !== result.noteName) {
+  function freqFromMidi(midiNote) {
+    return Tone.Midi(midiNote).toFrequency();
+  }
+
+
+  function noteOn(hand, value, thumbBonus = false, velocity = 0.85) {
+    if (!state.ready) return null;
+    const info = computeNoteInfo(hand, value, thumbBonus);
+    if (!info) return null;
+
+    if (state.activeVoices[hand] && state.activeVoices[hand] !== info.noteName) {
       safeRelease(state.activeVoices[hand]);
     }
 
     if (state.instrument.triggerAttack) {
-      state.instrument.triggerAttack(result.freq, Tone.now(), velocity);
+      state.instrument.triggerAttack(freqFromMidi(info.midiNote), Tone.now(), velocity);
     }
-    state.activeVoices[hand] = result.noteName;
-    return result.noteName;
+    state.activeVoices[hand] = info.noteName;
+    return info.noteName;
   }
 
-  //update 
-  function noteUpdate(hand, fingerCount, velocity = 0.85) {
-    if (!fingerCount || fingerCount <= 0) {
+  /* */
+  function noteUpdate(hand, value, thumbBonus = false, velocity = 0.85) {
+    if (!value || value <= 0) {
       noteOff(hand);
       return null;
     }
-    const result = quantizeFingersToNote(hand, fingerCount);
-    if (!result) return null;
+    const info = computeNoteInfo(hand, value, thumbBonus);
+    if (!info) return null;
 
     if (!state.activeVoices[hand]) {
-      return noteOn(hand, fingerCount, velocity);
+      return noteOn(hand, value, thumbBonus, velocity);
     }
-    if (result.noteName !== state.activeVoices[hand]) {
+    if (info.noteName !== state.activeVoices[hand]) {
       safeRelease(state.activeVoices[hand]);
-      return noteOn(hand, fingerCount, velocity);
+      return noteOn(hand, value, thumbBonus, velocity);
     }
-    return result.noteName;
+    return info.noteName;
   }
 
   function safeRelease(noteName) {
@@ -151,11 +156,12 @@ const AudioEngine = (() => {
     setScale,
     setRoot,
     setVolumeDb,
-    quantizeFingersToNote,
+    computeNoteInfo,
+    previewNoteName,
     noteOn,
     noteUpdate,
     noteOff,
     getActiveNote,
-    MAX_FINGERS,
+    HAND_OCTAVE,
   };
 })();
