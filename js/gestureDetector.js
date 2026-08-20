@@ -1,29 +1,39 @@
-/**
- * gestureDetector.js
- * ------------------------------------------------------------------
- * ------------------------------------------------------------------
- */
+
 
 const GestureDetector = (() => {
-  
+  // Landmark index MediaPipe Hands
   const THUMB_TIP = 4, THUMB_IP = 3, PINKY_MCP = 17, WRIST = 0;
-  const FINGERS = [
-    { name: "index", tip: 8, pip: 6 },
-    { name: "middle", tip: 12, pip: 10 },
-    { name: "ring", tip: 16, pip: 14 },
-    { name: "pinky", tip: 20, pip: 18 },
+  const FINGER_DEFS = [
+    { name: "index", tip: 8, pip: 6, weight: 8 },
+    { name: "middle", tip: 12, pip: 10, weight: 4 },
+    { name: "ring", tip: 16, pip: 14, weight: 2 },
+    { name: "pinky", tip: 20, pip: 18, weight: 1 },
   ];
 
+//anti noise
   const STABLE_FRAMES = 3;
 
   let videoEl, canvasEl, ctx;
   let hands, camera;
   let running = false;
 
-  let handStates = {
-    Left: { present: false, committedCount: 0, pendingCount: 0, pendingStreak: 0 },
-    Right: { present: false, committedCount: 0, pendingCount: 0, pendingStreak: 0 },
-  };
+  function makeFingerState() {
+    return { committed: false, pending: false, streak: 0 };
+  }
+  function makeHandState() {
+    return {
+      present: false,
+      fingers: {
+        thumb: makeFingerState(),
+        index: makeFingerState(),
+        middle: makeFingerState(),
+        ring: makeFingerState(),
+        pinky: makeFingerState(),
+      },
+    };
+  }
+
+  let handStates = { Left: makeHandState(), Right: makeHandState() };
 
   let callbacks = {
     onHandUpdate: () => {},
@@ -39,27 +49,52 @@ const GestureDetector = (() => {
     canvasEl.width = videoEl.videoWidth || canvasEl.clientWidth;
     canvasEl.height = videoEl.videoHeight || canvasEl.clientHeight;
   }
-  
-  function countExtendedFingers(landmarks) {
-    const extended = {};
 
-    
-    for (const f of FINGERS) {
-      extended[f.name] = landmarks[f.tip].y < landmarks[f.pip].y;
+  /** 1 frame. */
+  function detectRawFingerStates(landmarks) {
+    const raw = {};
+    for (const f of FINGER_DEFS) {
+
+      raw[f.name] = landmarks[f.tip].y < landmarks[f.pip].y;
     }
 
-    extended.thumb = dist(landmarks[THUMB_TIP], landmarks[PINKY_MCP]) >
-                      dist(landmarks[THUMB_IP], landmarks[PINKY_MCP]);
-
-    const count = Object.values(extended).filter(Boolean).length;
-    return { count, extended };
+    raw.thumb = dist(landmarks[THUMB_TIP], landmarks[PINKY_MCP]) >
+                dist(landmarks[THUMB_IP], landmarks[PINKY_MCP]);
+    return raw;
   }
 
-  function drawConnectorsAndPoints(landmarks, handedness, extendedMap) {
-    const color = handedness === "Left" ? "#9b4fd1" : "#29c4b6";
+  function updateDebounce(fingerStates, rawStates) {
+    const committed = {};
+    for (const name of Object.keys(fingerStates)) {
+      const fs = fingerStates[name];
+      const raw = rawStates[name];
+      if (raw === fs.pending) {
+        fs.streak++;
+      } else {
+        fs.pending = raw;
+        fs.streak = 1;
+      }
+      if (fs.streak >= STABLE_FRAMES && fs.committed !== fs.pending) {
+        fs.committed = fs.pending;
+      }
+      committed[name] = fs.committed;
+    }
+    return committed;
+  }
+
+  function computeGestureValue(committed) {
+    let value = 0;
+    for (const f of FINGER_DEFS) {
+      if (committed[f.name]) value += f.weight;
+    }
+    return value;
+  }
+
+  function drawConnectorsAndPoints(landmarks, handedness, committed) {
+    const color = handedness === "Left" ? "#8b4fc4" : "#29b3a6";
 
     if (window.drawConnectors) {
-      drawConnectors(ctx, landmarks, HAND_CONNECTIONS, { color: "rgba(255,255,255,0.22)", lineWidth: 2 });
+      drawConnectors(ctx, landmarks, HAND_CONNECTIONS, { color: "rgba(255,255,255,0.20)", lineWidth: 2 });
     }
 
     const tipIndices = { thumb: 4, index: 8, middle: 12, ring: 16, pinky: 20 };
@@ -68,40 +103,41 @@ const GestureDetector = (() => {
       const y = lm.y * canvasEl.height;
       ctx.beginPath();
       ctx.arc(x, y, 3, 0, Math.PI * 2);
-      ctx.fillStyle = "rgba(255,255,255,0.35)";
+      ctx.fillStyle = "rgba(255,255,255,0.32)";
       ctx.fill();
     }
 
-    //mark
+
     for (const [name, idx] of Object.entries(tipIndices)) {
       const lm = landmarks[idx];
       const x = lm.x * canvasEl.width;
       const y = lm.y * canvasEl.height;
-      const isExtended = extendedMap[name];
+      const isExtended = committed[name];
       ctx.beginPath();
-      ctx.arc(x, y, isExtended ? 8 : 4, 0, Math.PI * 2);
-      ctx.fillStyle = isExtended ? color : "rgba(255,255,255,0.3)";
+      ctx.arc(x, y, isExtended ? 7 : 3.5, 0, Math.PI * 2);
+      ctx.fillStyle = isExtended ? color : "rgba(255,255,255,0.28)";
       ctx.shadowColor = color;
-      ctx.shadowBlur = isExtended ? 12 : 0;
+      ctx.shadowBlur = isExtended ? 9 : 0;
       ctx.fill();
     }
     ctx.shadowBlur = 0;
   }
 
-  function drawFingerCountBadge(landmarks, handedness, count) {
+  function drawValueBadge(landmarks, handedness, value) {
     const wrist = landmarks[WRIST];
     const x = wrist.x * canvasEl.width;
-    const y = wrist.y * canvasEl.height + 26;
-    const color = handedness === "Left" ? "#9b4fd1" : "#29c4b6";
+    const y = wrist.y * canvasEl.height + 24;
+    const color = handedness === "Left" ? "#8b4fc4" : "#29b3a6";
+
 
     ctx.save();
-    ctx.scale(-1, 1); 
-    ctx.font = "600 15px 'JetBrains Mono', monospace";
+    ctx.scale(-1, 1);
+    ctx.font = "600 13px 'JetBrains Mono', monospace";
     ctx.textAlign = "center";
     ctx.fillStyle = color;
     ctx.shadowColor = color;
-    ctx.shadowBlur = 6;
-    ctx.fillText(String(count), -x, y);
+    ctx.shadowBlur = 5;
+    ctx.fillText(String(value), -x, y);
     ctx.restore();
     ctx.shadowBlur = 0;
   }
@@ -115,42 +151,34 @@ const GestureDetector = (() => {
     if (results.multiHandLandmarks && results.multiHandedness) {
       for (let i = 0; i < results.multiHandLandmarks.length; i++) {
         const landmarks = results.multiHandLandmarks[i];
+        // 
+
         
-        const rawLabel = results.multiHandedness[i].label; 
+        const rawLabel = results.multiHandedness[i].label; // "Left" | "Right"
         const label = rawLabel === "Left" ? "Right" : "Left";
 
         seenThisFrame[label] = true;
         const st = handStates[label];
         st.present = true;
 
-        const { count, extended } = countExtendedFingers(landmarks);
+        const rawStates = detectRawFingerStates(landmarks);
+        const committed = updateDebounce(st.fingers, rawStates);
+        const value = computeGestureValue(committed);
+        const thumbBonus = committed.thumb;
 
-        drawConnectorsAndPoints(landmarks, label, extended);
-        drawFingerCountBadge(landmarks, label, count);
+        drawConnectorsAndPoints(landmarks, label, committed);
+        drawValueBadge(landmarks, label, value);
 
-        // Debounce sederhana
-      
-        if (count === st.pendingCount) {
-          st.pendingStreak++;
-        } else {
-          st.pendingCount = count;
-          st.pendingStreak = 1;
-        }
-        if (st.pendingStreak >= STABLE_FRAMES && st.committedCount !== st.pendingCount) {
-          st.committedCount = st.pendingCount;
-        }
-
-        callbacks.onHandUpdate(label, st.committedCount, landmarks);
+        callbacks.onHandUpdate(label, value, thumbBonus, committed, landmarks);
       }
     }
 
+    // 
     for (const label of ["Left", "Right"]) {
       const st = handStates[label];
       if (st.present && !seenThisFrame[label]) {
         st.present = false;
-        st.committedCount = 0;
-        st.pendingCount = 0;
-        st.pendingStreak = 0;
+        handStates[label] = makeHandState();
         callbacks.onHandLost(label);
       }
     }
@@ -197,11 +225,8 @@ const GestureDetector = (() => {
       videoEl.srcObject = null;
     }
     if (ctx) ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
-    handStates = {
-      Left: { present: false, committedCount: 0, pendingCount: 0, pendingStreak: 0 },
-      Right: { present: false, committedCount: 0, pendingCount: 0, pendingStreak: 0 },
-    };
+    handStates = { Left: makeHandState(), Right: makeHandState() };
   }
 
-  return { start, stop };
+  return { start, stop, FINGER_DEFS };
 })();
