@@ -1,4 +1,3 @@
-
 (function bootstrap() {
   let cameraOn = false;
   let audioInitialized = false;
@@ -8,7 +7,7 @@
 
   async function ensureAudioReady() {
     if (audioInitialized) return;
-    await Tone.start();         
+    await Tone.start();      
     await AudioEngine.init();
     AudioEngine.setScale(document.getElementById("scaleSelect").value);
     AudioEngine.setRoot(parseInt(document.getElementById("rootSelect").value, 10));
@@ -73,6 +72,7 @@
     onRootChange: (semitone) => AudioEngine.setRoot(semitone),
     onVolumeChange: (db) => audioInitialized && AudioEngine.setVolumeDb(db),
   });
+
 
   UIController.refreshComboTables();
 })();
