@@ -1,16 +1,18 @@
 const GestureDetector = (() => {
-
-  
-  const THUMB_TIP = 4, THUMB_IP = 3, PINKY_MCP = 17, WRIST = 0;
-  const FINGER_DEFS = [
-    { name: "index", tip: 8, pip: 6, weight: 8 },
-    { name: "middle", tip: 12, pip: 10, weight: 4 },
-    { name: "ring", tip: 16, pip: 14, weight: 2 },
-    { name: "pinky", tip: 20, pip: 18, weight: 1 },
+ 
+  const THUMB_TIP = 4, THUMB_IP = 3, PINKY_MCP = 17, INDEX_MCP = 5, WRIST = 0;
+  const COUNT_FINGERS = [
+    { name: "index", tip: 8, pip: 6 },
+    { name: "middle", tip: 12, pip: 10 },
+    { name: "ring", tip: 16, pip: 14 },
+    { name: "pinky", tip: 20, pip: 18 },
   ];
 
-  
+
   const STABLE_FRAMES = 3;
+
+ 
+  const ORIENTATION_SIGN_PALM_IS_POSITIVE = true;
 
   let videoEl, canvasEl, ctx;
   let hands, camera;
@@ -29,6 +31,7 @@ const GestureDetector = (() => {
         ring: makeFingerState(),
         pinky: makeFingerState(),
       },
+      orientation: { committed: "palm", pending: "palm", streak: 0 },
     };
   }
 
@@ -49,25 +52,44 @@ const GestureDetector = (() => {
     canvasEl.height = videoEl.videoHeight || canvasEl.clientHeight;
   }
 
-
-  
+  /** Deteksi mentah (belum di-debounce) status terentang tiap jari untuk 1 frame. */
   function detectRawFingerStates(landmarks) {
     const raw = {};
-    for (const f of FINGER_DEFS) {
-    
-      
+    for (const f of COUNT_FINGERS) {
+      // Jari terentang jika ujung jari lebih "tinggi" (y lebih kecil) dari sendi tengahnya.
+      // Perbandingan ini tidak terpengaruh orientasi telapak/punggung, karena
+      // rotasi itu berputar pada poros lengan (tegak lurus bidang gambar),
+      // sedangkan tekukan jari tetap terbaca naik/turun yang sama di gambar.
       raw[f.name] = landmarks[f.tip].y < landmarks[f.pip].y;
     }
-  
-    
+    // Ibu jari bergerak menyamping -> dicek lewat jarak ke pangkal kelingking,
+    // rotation-invariant terhadap orientasi tangan.
     raw.thumb = dist(landmarks[THUMB_TIP], landmarks[PINKY_MCP]) >
                 dist(landmarks[THUMB_IP], landmarks[PINKY_MCP]);
     return raw;
   }
 
+  /**
+   * Klasifikasi telapak vs punggung tangan dari arah putaran (winding order)
+   * segitiga wrist -> index_mcp -> pinky_mcp. Tangan kiri & kanan adalah
+   * bayangan cermin satu sama lain, jadi tanda hasil cross-product perlu
+   * dibalik sesuai label tangan supaya konsisten "isPalmFacing" di kedua sisi.
+   */
+  function computeIsPalmFacing(landmarks, correctedLabel) {
+    const wrist = landmarks[WRIST];
+    const indexMcp = landmarks[INDEX_MCP];
+    const pinkyMcp = landmarks[PINKY_MCP];
+    const v1x = indexMcp.x - wrist.x, v1y = indexMcp.y - wrist.y;
+    const v2x = pinkyMcp.x - wrist.x, v2y = pinkyMcp.y - wrist.y;
+    const cross = v1x * v2y - v1y * v2x;
 
-  
-  function updateDebounce(fingerStates, rawStates) {
+    const rawPositive = cross > 0;
+    const normalized = correctedLabel === "Left" ? rawPositive : !rawPositive;
+    return ORIENTATION_SIGN_PALM_IS_POSITIVE ? normalized : !normalized;
+  }
+
+  /** Terapkan debounce per jari; mengembalikan status "committed" (stabil) terbaru. */
+  function updateFingerDebounce(fingerStates, rawStates) {
     const committed = {};
     for (const name of Object.keys(fingerStates)) {
       const fs = fingerStates[name];
@@ -86,20 +108,38 @@ const GestureDetector = (() => {
     return committed;
   }
 
+  function updateOrientationDebounce(orientationState, isPalmRaw) {
+    const raw = isPalmRaw ? "palm" : "back";
+    if (raw === orientationState.pending) {
+      orientationState.streak++;
+    } else {
+      orientationState.pending = raw;
+      orientationState.streak = 1;
+    }
+    if (orientationState.streak >= STABLE_FRAMES && orientationState.committed !== orientationState.pending) {
+      orientationState.committed = orientationState.pending;
+    }
+    return orientationState.committed;
+  }
 
-
-  
+  /**
+   * Kombinasi "hanya jari tengah yang terentang" (jari lain terkepal)
+   * sengaja dinonaktifkan — bentuk tangan itu terlalu mirip gestur yang
+   * tidak sopan, jadi diperlakukan sama seperti kepalan (diam). Karena
+   * sekarang berbasis hitungan bebas, pengguna tetap bisa mencapai
+   * hitungan "1" lewat jari lain yang lebih nyaman (mis. hanya telunjuk).
+   */
   function isMiddleFingerOnly(committed) {
     return committed.middle && !committed.index && !committed.ring && !committed.pinky;
   }
 
-  function computeGestureValue(committed) {
+  function countExtendedFingers(committed) {
     if (isMiddleFingerOnly(committed)) return 0;
-    let value = 0;
-    for (const f of FINGER_DEFS) {
-      if (committed[f.name]) value += f.weight;
+    let count = 0;
+    for (const f of COUNT_FINGERS) {
+      if (committed[f.name]) count++;
     }
-    return value;
+    return count;
   }
 
   function drawConnectorsAndPoints(landmarks, handedness, committed) {
@@ -119,8 +159,7 @@ const GestureDetector = (() => {
       ctx.fill();
     }
 
-
-    
+    // Tandai ujung jari yang terentang (status stabil/committed) lebih besar & bercahaya.
     for (const [name, idx] of Object.entries(tipIndices)) {
       const lm = landmarks[idx];
       const x = lm.x * canvasEl.width;
@@ -136,22 +175,23 @@ const GestureDetector = (() => {
     ctx.shadowBlur = 0;
   }
 
-  function drawValueBadge(landmarks, handedness, value) {
+  function drawStatusBadge(landmarks, handedness, count, orientation) {
     const wrist = landmarks[WRIST];
     const x = wrist.x * canvasEl.width;
     const y = wrist.y * canvasEl.height + 24;
     const color = handedness === "Left" ? "#8b4fc4" : "#29b3a6";
+    const label = `${count} \u00B7 ${orientation === "palm" ? "TELAPAK" : "PUNGGUNG"}`;
 
-   
-    
+    // Teks digambar dengan pre-flip agar tetap terbaca normal setelah
+    // canvas di-mirror lewat CSS (scaleX(-1)) untuk tampilan yang natural.
     ctx.save();
     ctx.scale(-1, 1);
-    ctx.font = "600 13px 'JetBrains Mono', monospace";
+    ctx.font = "600 11px 'JetBrains Mono', monospace";
     ctx.textAlign = "center";
     ctx.fillStyle = color;
     ctx.shadowColor = color;
     ctx.shadowBlur = 5;
-    ctx.fillText(String(value), -x, y);
+    ctx.fillText(label, -x, y);
     ctx.restore();
     ctx.shadowBlur = 0;
   }
@@ -165,30 +205,33 @@ const GestureDetector = (() => {
     if (results.multiHandLandmarks && results.multiHandedness) {
       for (let i = 0; i < results.multiHandLandmarks.length; i++) {
         const landmarks = results.multiHandLandmarks[i];
-        
-        
-        const rawLabel = results.multiHandedness[i].label; 
-        
+        // MediaPipe melabeli tangan dari sudut pandang kamera; video & canvas
+        // di-mirror lewat CSS untuk interaksi natural, jadi label dibalik
+        // agar sesuai persepsi pengguna di layar.
+        const rawLabel = results.multiHandedness[i].label; // "Left" | "Right"
         const label = rawLabel === "Left" ? "Right" : "Left";
 
         seenThisFrame[label] = true;
         const st = handStates[label];
         st.present = true;
 
-        const rawStates = detectRawFingerStates(landmarks);
-        const committed = updateDebounce(st.fingers, rawStates);
-        const value = computeGestureValue(committed);
+        const rawFingerStates = detectRawFingerStates(landmarks);
+        const committed = updateFingerDebounce(st.fingers, rawFingerStates);
+        const count = countExtendedFingers(committed);
+
+        const isPalmRaw = computeIsPalmFacing(landmarks, label);
+        const orientation = updateOrientationDebounce(st.orientation, isPalmRaw);
+
         const thumbBonus = committed.thumb;
 
         drawConnectorsAndPoints(landmarks, label, committed);
-        drawValueBadge(landmarks, label, value);
+        drawStatusBadge(landmarks, label, count, orientation);
 
-        callbacks.onHandUpdate(label, value, thumbBonus, committed, landmarks);
+        callbacks.onHandUpdate(label, count, orientation, thumbBonus, committed, landmarks);
       }
     }
 
-
-    
+    // Tangan yang hilang dari frame -> reset & beri tahu agar nada dimatikan.
     for (const label of ["Left", "Right"]) {
       const st = handStates[label];
       if (st.present && !seenThisFrame[label]) {
@@ -243,5 +286,5 @@ const GestureDetector = (() => {
     handStates = { Left: makeHandState(), Right: makeHandState() };
   }
 
-  return { start, stop, FINGER_DEFS };
+  return { start, stop };
 })();
