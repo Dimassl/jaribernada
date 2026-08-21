@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>GeoGestPlay — Piano dengan Kombinasi Jari</title>
+<title>GeoGestPlay: Piano dengan Kombinasi Jari</title>
 <meta name="description" content="Mainkan piano dengan kombinasi bentuk jari tangan langsung di browser." />
 <link rel="icon" type="image/png" href="assets/favicon.png" />
 
@@ -21,7 +21,7 @@
 <!-- Tone.js -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
 
-<!-- MediaPipe Hands-->
+<!-- MediaPipe Hands -->
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
@@ -36,7 +36,7 @@
       <img class="brand-mark" src="assets/logo-256.png" alt="Logo GeoGestPlay" />
       <div class="brand-text">
         <h1>GeoGestPlay</h1>
-        <p class="subtitle">Piano &middot; dimainkan dengan kombinasi jari</p>
+        <p class="subtitle">Piano dimainkan dengan kombinasi jari</p>
       </div>
     </div>
     <div class="status-readout" id="statusReadout">
@@ -48,7 +48,7 @@
   <!-- ===== Main Stage ===== -->
   <main class="stage">
 
-    <!-- Camera + overlay + gesture cards -->
+    <!-- Camera-->
     <section class="scope" aria-label="Tampilan kamera dan deteksi tangan">
       <div class="scope-frame">
         <video id="inputVideo" playsinline autoplay muted></video>
@@ -60,14 +60,14 @@
         </div>
       </div>
 
-      <!-- Signature element: gesture card per tangan (status 5 jari + nada aktif) -->
+      <!-- Signature elemen -->
       <div class="gesture-rail" aria-hidden="true">
         <div class="gesture-card gesture-card--left">
           <div class="gesture-card__head">
-            <span class="material-symbols-outlined" aria-hidden="true">back_hand</span>
+            <span class="material-symbols-outlined" id="leftOrientationIcon" aria-hidden="true">front_hand</span>
             <div class="gesture-card__title">
               <span class="gesture-card__hand">KIRI</span>
-              <span class="gesture-card__register">Rendah</span>
+              <span class="gesture-card__register">Bass</span>
             </div>
           </div>
           <div class="finger-chip" id="leftFingerChip"></div>
@@ -76,10 +76,10 @@
 
         <div class="gesture-card gesture-card--right">
           <div class="gesture-card__head">
-            <span class="material-symbols-outlined gesture-card__hand-icon--mirror" aria-hidden="true">back_hand</span>
+            <span class="material-symbols-outlined gesture-card__hand-icon--mirror" id="rightOrientationIcon" aria-hidden="true">front_hand</span>
             <div class="gesture-card__title">
               <span class="gesture-card__hand">KANAN</span>
-              <span class="gesture-card__register">Tinggi</span>
+              <span class="gesture-card__register">Treble</span>
             </div>
           </div>
           <div class="finger-chip" id="rightFingerChip"></div>
@@ -134,18 +134,19 @@
       <div class="control-group how-to">
         <h2><span class="material-symbols-outlined how-to__icon" aria-hidden="true">info</span> Cara Main</h2>
         <ul>
-          <li>Setiap jari punya bobot: <strong>Telunjuk = 8, Tengah = 4, Manis = 2, Kelingking = 1</strong>.</li>
-          <li>Jumlahkan bobot jari yang diacungkan untuk memilih nada, 14 kombinasi memainkan 2 oktaf penuh secara berurutan.</li>
-          <li>Kepalkan keempat jari itu (nilai 0) untuk diam / berhenti berbunyi.</li>
+          <li>Acungkan berapa saja jari (1–4, bebas jari mana pun) untuk memilih nada — jumlahnya yang penting, bukan jari mana yang dipakai.</li>
+          <li>Kepalkan tangan (0 jari) untuk diam / berhenti berbunyi.</li>
+          <li>Putar pergelangan tangan: <strong>telapak</strong> menghadap kamera memainkan 4 nada pertama tangga nada, <strong>punggung tangan</strong> menghadap kamera melanjutkan ke 4 nada berikutnya.</li>
+          <li>Mengacungkan <strong>hanya jari tengah sendirian</strong> sengaja dinonaktifkan (dianggap diam) — pakai jari lain untuk hitungan yang sama.</li>
           <li>Ikut acungkan <strong>ibu jari</strong> untuk naik satu oktaf tambahan (bonus).</li>
-          <li><strong>Tangan kiri</strong> = rendah, <strong>tangan kanan</strong> = tinggi pakai keduanya sekaligus untuk jangkauan nada yang luas.</li>
+          <li><strong>Tangan kiri</strong> = register bass, <strong>tangan kanan</strong> = register treble — pakai keduanya sekaligus untuk jangkauan nada yang luas.</li>
         </ul>
       </div>
 
       <details class="control-group combo-details">
         <summary>
           <span class="material-symbols-outlined" aria-hidden="true">table_rows</span>
-          Tabel referensi kombinasi jari
+          Tabel referensi kombinasi
         </summary>
         <div class="combo-tables">
           <div>
