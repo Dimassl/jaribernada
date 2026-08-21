@@ -64,6 +64,7 @@ const UIController = (() => {
     els.scopeEmpty.classList.toggle("hidden", isLive);
   }
 
+
   function renderComboTable(hand) {
     const table = hand === "Left" ? els.comboTableLeft : els.comboTableRight;
     if (!table) return;
