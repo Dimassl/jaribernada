@@ -7,7 +7,7 @@
 
   async function ensureAudioReady() {
     if (audioInitialized) return;
-    await Tone.start();      
+    await Tone.start();          
     await AudioEngine.init();
     AudioEngine.setScale(document.getElementById("scaleSelect").value);
     AudioEngine.setRoot(parseInt(document.getElementById("rootSelect").value, 10));
@@ -49,7 +49,7 @@
     UIController.setCameraLive(false);
   }
 
-  // ---- Gesture -> Audio + UI ------------------------------------------------
+  // ---- Gesture -------------------------------
 
   function handleHandUpdate(hand, value, thumbBonus, committedMap) {
     UIController.setFingerChip(hand, committedMap);
