@@ -1,16 +1,19 @@
 const AudioEngine = (() => {
 
-
+  
   const SCALES = {
-    major: [0, 2, 4, 5, 7, 9, 11],     
-    minor: [0, 2, 3, 5, 7, 8, 10],     
+    major: [0, 2, 4, 5, 7, 9, 11],       // Ionian
+    minor: [0, 2, 3, 5, 7, 8, 10],       // Natural minor / Aeolian
   };
 
   const MIDI_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-.
+
+
+  
   const COMBO_VALUES = [1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
 
 
+  
   const HAND_OCTAVE = { Left: 2, Right: 4 };
 
   let state = {
@@ -22,7 +25,9 @@ const AudioEngine = (() => {
     ready: false,
   };
 
+ 
 
+  
   function buildPiano() {
     return new Tone.Sampler({
       urls: {
@@ -68,10 +73,14 @@ const AudioEngine = (() => {
     if (state.master) state.master.volume.rampTo(db, 0.05);
   }
 
- 
+
+
+
+  
   function computeNoteInfo(hand, value, thumbBonus = false) {
     const sequenceIndex = COMBO_VALUES.indexOf(value);
     if (sequenceIndex === -1) return null; 
+    
 
     const scale = SCALES[state.scaleName];
     const octaveOffset = Math.floor(sequenceIndex / scale.length);
@@ -81,13 +90,15 @@ const AudioEngine = (() => {
     const bonusOctave = thumbBonus ? 1 : 0;
     const octave = (HAND_OCTAVE[hand] ?? 3) + octaveOffset + bonusOctave;
 
-    const midiNote = 12 * octave + state.root + semitoneFromRoot + 12; // +12: C4 anchor
+    const midiNote = 12 * octave + state.root + semitoneFromRoot + 12; 
+    
     const noteName = MIDI_NAMES[midiNote % 12] + Math.floor(midiNote / 12 - 1);
 
     return { noteName, midiNote };
   }
 
 
+  
   function previewNoteName(hand, value, thumbBonus = false) {
     const info = computeNoteInfo(hand, value, thumbBonus);
     return info ? info.noteName : null;
@@ -97,7 +108,11 @@ const AudioEngine = (() => {
     return Tone.Midi(midiNote).toFrequency();
   }
 
- 
+
+
+
+
+  
   function noteOn(hand, value, thumbBonus = false, velocity = 0.85) {
     if (!state.ready) return null;
     const info = computeNoteInfo(hand, value, thumbBonus);
@@ -115,6 +130,9 @@ const AudioEngine = (() => {
   }
 
 
+
+
+  
   function noteUpdate(hand, value, thumbBonus = false, velocity = 0.85) {
     if (!value || value <= 0) {
       noteOff(hand);
