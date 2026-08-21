@@ -1,4 +1,5 @@
 const GestureDetector = (() => {
+
   
   const THUMB_TIP = 4, THUMB_IP = 3, PINKY_MCP = 17, WRIST = 0;
   const FINGER_DEFS = [
@@ -8,7 +9,7 @@ const GestureDetector = (() => {
     { name: "pinky", tip: 20, pip: 18, weight: 1 },
   ];
 
- 
+  
   const STABLE_FRAMES = 3;
 
   let videoEl, canvasEl, ctx;
@@ -48,20 +49,24 @@ const GestureDetector = (() => {
     canvasEl.height = videoEl.videoHeight || canvasEl.clientHeight;
   }
 
+
   
   function detectRawFingerStates(landmarks) {
     const raw = {};
     for (const f of FINGER_DEFS) {
     
+      
       raw[f.name] = landmarks[f.tip].y < landmarks[f.pip].y;
     }
-
+  
+    
     raw.thumb = dist(landmarks[THUMB_TIP], landmarks[PINKY_MCP]) >
                 dist(landmarks[THUMB_IP], landmarks[PINKY_MCP]);
     return raw;
   }
 
-  ////////////
+
+  
   function updateDebounce(fingerStates, rawStates) {
     const committed = {};
     for (const name of Object.keys(fingerStates)) {
@@ -81,6 +86,9 @@ const GestureDetector = (() => {
     return committed;
   }
 
+
+
+  
   function isMiddleFingerOnly(committed) {
     return committed.middle && !committed.index && !committed.ring && !committed.pinky;
   }
@@ -111,7 +119,8 @@ const GestureDetector = (() => {
       ctx.fill();
     }
 
-    ///////
+
+    
     for (const [name, idx] of Object.entries(tipIndices)) {
       const lm = landmarks[idx];
       const x = lm.x * canvasEl.width;
@@ -133,7 +142,8 @@ const GestureDetector = (() => {
     const y = wrist.y * canvasEl.height + 24;
     const color = handedness === "Left" ? "#8b4fc4" : "#29b3a6";
 
-
+   
+    
     ctx.save();
     ctx.scale(-1, 1);
     ctx.font = "600 13px 'JetBrains Mono', monospace";
@@ -155,8 +165,10 @@ const GestureDetector = (() => {
     if (results.multiHandLandmarks && results.multiHandedness) {
       for (let i = 0; i < results.multiHandLandmarks.length; i++) {
         const landmarks = results.multiHandLandmarks[i];
-     /////////////////
-        const rawLabel = results.multiHandedness[i].label; // "Left" | "Right"
+        
+        
+        const rawLabel = results.multiHandedness[i].label; 
+        
         const label = rawLabel === "Left" ? "Right" : "Left";
 
         seenThisFrame[label] = true;
@@ -175,7 +187,8 @@ const GestureDetector = (() => {
       }
     }
 
-    // ======//
+
+    
     for (const label of ["Left", "Right"]) {
       const st = handStates[label];
       if (st.present && !seenThisFrame[label]) {
